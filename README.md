@@ -18,7 +18,7 @@ High-quality surface normals are estimated by:
 
 When working with sparse data sets, [`surface_nets`] can generate meshes for array chunks that fit together seamlessly. This
 works because faces are not generated on the positive boundaries of a chunk. One must only apply a translation of the mesh
-into proper world coordinates for given chunk.
+into proper world coordinates for the given chunk.
 
 ## Example Code
 
