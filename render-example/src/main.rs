@@ -79,7 +79,7 @@ fn into_domain(array_dim: u32, [x, y, z]: [u32; 3]) -> [f32; 3] {
 }
 
 fn sphere_sdf([x, y, z]: [f32; 3]) -> f32 {
-    (x * x + y * y + z * z) - 0.9
+    (x * x + y * y + z * z).sqrt() - 0.9
 }
 
 type SampleShape = ConstShape3u32<66, 66, 66>;

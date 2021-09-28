@@ -26,19 +26,21 @@ into proper world coordinates for given chunk.
 use fast_surface_nets::ndshape::{ConstShape, ConstShape3u32};
 use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
 
+// A 16^3 chunk with 1-voxel boundary padding.
 pub type ChunkShape = ConstShape3u32<18, 18, 18>;
 
-// This SDF should have a single octant of a sphere for an isosurface.
+// This chunk will cover just a single octant of a sphere SDF (radius 15).
 let mut sdf = [1.0; ChunkShape::SIZE as usize];
 for i in 0u32..(ChunkShape::SIZE) {
     let [x, y, z] = ChunkShape::delinearize(i);
-    sdf[i as usize] = (x * x + y * y + z * z) as f32 - 15.0;
+    sdf[i as usize] = ((x * x + y * y + z * z) as f32).sqrt() - 15.0;
 }
 
 let mut buffer = SurfaceNetsBuffer::default();
 surface_nets(&sdf, &ChunkShape {}, [0; 3], [17; 3], &mut buffer);
 
-assert_eq!(buffer.indices.len() / 3, 48);
+// Some triangles were generated.
+assert!(!buffer.indices.is_empty());
 ```
 
 License: MIT OR Apache-2.0
