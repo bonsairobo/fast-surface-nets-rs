@@ -29,7 +29,7 @@
 //!
 //! // This chunk will cover just a single octant of a sphere SDF (radius 15).
 //! let mut sdf = [1.0; ChunkShape::SIZE as usize];
-//! for i in 0u32..(ChunkShape::SIZE) {
+//! for i in 0u32..ChunkShape::SIZE {
 //!     let [x, y, z] = ChunkShape::delinearize(i);
 //!     sdf[i as usize] = ((x * x + y * y + z * z) as f32).sqrt() - 15.0;
 //! }
