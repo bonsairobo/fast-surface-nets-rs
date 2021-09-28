@@ -3,7 +3,7 @@
 A fast, chunk-friendly implementation of Naive Surface Nets on regular grids.
 
 Surface Nets is an algorithm for extracting an isosurface mesh from a [signed distance
-field]((https://en.wikipedia.org/wiki/Signed_distance_function)) sampled on a regular grid. It is nearly the same as Dual
+field](https://en.wikipedia.org/wiki/Signed_distance_function) sampled on a regular grid. It is nearly the same as Dual
 Contouring, but instead of using hermite (derivative) data to estimate surface points, Surface Nets will do a simpler form
 of interpolation (average) between points where the isosurface crosses voxel cube edges.
 
@@ -40,3 +40,5 @@ surface_nets(&sdf, &ChunkShape {}, [0; 3], [17; 3], &mut buffer);
 
 assert_eq!(buffer.indices.len() / 3, 48);
 ```
+
+License: MIT OR Apache-2.0
