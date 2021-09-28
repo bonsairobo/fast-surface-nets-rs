@@ -163,8 +163,8 @@ fn estimate_surface<T, S>(
     }
 }
 
-// Consider the grid-aligned cube where `point` is the minimal corner. Find a point inside this cube that is approximately on
-// the isosurface.
+// Consider the grid-aligned cube where `p` is the minimal corner. Find a point inside this cube that is approximately on the
+// isosurface.
 //
 // This is done by estimating, for each cube edge, where the isosurface crosses the edge (if it does at all). Then the estimated
 // surface point is the average of these edge crossings.
@@ -267,7 +267,7 @@ fn sdf_gradient(dists: &[f32; 8], s: Vec3A) -> Vec3A {
 }
 
 // For every edge that crosses the isosurface, make a quad between the "centers" of the four cubes touching that surface. The
-// "centers" are actually the vertex sitions found earlier. Also, make sure the triangles are facing the right way. See the
+// "centers" are actually the vertex positions found earlier. Also make sure the triangles are facing the right way. See the
 // comments on `maybe_make_quad` to help with understanding the indexing.
 fn make_all_quads<T, S>(
     sdf: &[T],
