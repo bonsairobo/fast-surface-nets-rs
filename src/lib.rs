@@ -7,7 +7,7 @@
 //!
 //! Benchmarks show that [`surface_nets`] generates about 20 million triangles per second on a single core of a 2.5 GHz Intel
 //! Core i7. This implementation achieves high performance by using small lookup tables and SIMD acceleration provided by `glam`
-//! when doing 3D floating point vector math.
+//! when doing 3D floating point vector math. To run the benchmarks yourself, `cd bench/ && cargo bench`.
 //!
 //! High-quality surface normals are estimated by:
 //!
