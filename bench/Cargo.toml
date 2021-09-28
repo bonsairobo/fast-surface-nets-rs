@@ -1,0 +1,18 @@
+[package]
+name = "surface-nets-bench"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies.fast-surface-nets]
+path = ".."
+
+[dev-dependencies]
+criterion = "0.3"
+
+[profile.bench]
+lto = "thin"
+
+[[bench]]
+name = "bench"
+path = "src/bench.rs"
+harness = false

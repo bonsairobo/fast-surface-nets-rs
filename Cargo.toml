@@ -1,0 +1,11 @@
+[package]
+name = "fast-surface-nets"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+glam = "0.18" # For SIMD Vec3A
+
+[dependencies.ndshape]
+git = "https://github.com/bonsairobo/ndshape-rs"
+branch = "main"
