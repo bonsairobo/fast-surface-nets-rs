@@ -125,7 +125,8 @@ pub fn surface_nets<T, S>(
     T: SignedDistance,
     S: Shape<u32, 3>,
 {
-    // Make sure the slice matches the shape.
+    // SAFETY
+    // Make sure the slice matches the shape before we start using get_unchecked.
     assert!(shape.linearize(min) <= shape.linearize(max));
     assert!((shape.linearize(max) as usize) < sdf.len());
 
