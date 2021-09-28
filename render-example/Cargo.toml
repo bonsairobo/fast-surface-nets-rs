@@ -5,6 +5,7 @@ edition = "2018"
 
 [dependencies]
 bevy = "0.5"
+obj-exporter = "0.2"
 
 [dependencies.fast-surface-nets]
 path = ".."

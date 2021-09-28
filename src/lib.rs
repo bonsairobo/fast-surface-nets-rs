@@ -25,7 +25,7 @@
 //! use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
 //!
 //! // A 16^3 chunk with 1-voxel boundary padding.
-//! pub type ChunkShape = ConstShape3u32<18, 18, 18>;
+//! type ChunkShape = ConstShape3u32<18, 18, 18>;
 //!
 //! // This chunk will cover just a single octant of a sphere SDF (radius 15).
 //! let mut sdf = [1.0; ChunkShape::SIZE as usize];
