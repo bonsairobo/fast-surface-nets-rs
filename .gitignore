@@ -1,2 +1,3 @@
 **/target
 Cargo.lock
+render-example/mesh.obj
