@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-bevy = { version = "0.5", features = ["bevy_wgpu", "bevy_winit", "render", "png", "x11"] }
+bevy = { version = "0.5", default-features = false, features = ["bevy_wgpu", "bevy_winit", "render", "png", "x11"] }
 obj-exporter = "0.2"
 
 [dependencies.fast-surface-nets]
