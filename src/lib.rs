@@ -1,5 +1,7 @@
 //! A fast, chunk-friendly implementation of Naive Surface Nets on regular grids.
 //!
+//! ![Mesh Examples](https://raw.githubusercontent.com/bonsairobo/fast-surface-nets-rs/main/render-example/mesh_examples.png)
+//!
 //! Surface Nets is an algorithm for extracting an isosurface mesh from a [signed distance
 //! field](https://en.wikipedia.org/wiki/Signed_distance_function) sampled on a regular grid. It is nearly the same as Dual
 //! Contouring, but instead of using hermite (derivative) data to estimate surface points, Surface Nets will do a simpler form
@@ -7,7 +9,8 @@
 //!
 //! Benchmarks show that [`surface_nets`] generates about 20 million triangles per second on a single core of a 2.5 GHz Intel
 //! Core i7. This implementation achieves high performance by using small lookup tables and SIMD acceleration provided by `glam`
-//! when doing 3D floating point vector math. To run the benchmarks yourself, `cd bench/ && cargo bench`.
+//! when doing 3D floating point vector math. (Users are not required to use `glam` types in any API signatures.) To run the
+//! benchmarks yourself, `cd bench/ && cargo bench`.
 //!
 //! High-quality surface normals are estimated by:
 //!
@@ -41,6 +44,7 @@
 //! assert!(!buffer.indices.is_empty());
 //! ```
 
+pub use glam;
 pub use ndshape;
 
 use glam::{const_vec3a, Vec3A, Vec3Swizzles};
