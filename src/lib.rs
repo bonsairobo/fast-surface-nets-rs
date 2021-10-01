@@ -7,19 +7,19 @@
 //! Contouring, but instead of using hermite (derivative) data to estimate surface points, Surface Nets will do a simpler form
 //! of interpolation (average) between points where the isosurface crosses voxel cube edges.
 //!
-//! Benchmarks show that [`surface_nets`] generates about 20 million triangles per second on a single core of a 2.5 GHz Intel
-//! Core i7. This implementation achieves high performance by using small lookup tables and SIMD acceleration provided by `glam`
-//! when doing 3D floating point vector math. (Users are not required to use `glam` types in any API signatures.) To run the
-//! benchmarks yourself, `cd bench/ && cargo bench`.
+//! Benchmarks show that [`surface_nets`](crate::surface_nets) generates about 20 million triangles per second on a single core
+//! of a 2.5 GHz Intel Core i7. This implementation achieves high performance by using small lookup tables and SIMD acceleration
+//! provided by `glam` when doing 3D floating point vector math. (Users are not required to use `glam` types in any API
+//! signatures.) To run the benchmarks yourself, `cd bench/ && cargo bench`.
 //!
 //! High-quality surface normals are estimated by:
 //!
 //! 1. calculating SDF derivatives using central differencing
 //! 2. using bilinear interpolation of SDF derivatives along voxel cube edges
 //!
-//! When working with sparse data sets, [`surface_nets`] can generate meshes for array chunks that fit together seamlessly. This
-//! works because faces are not generated on the positive boundaries of a chunk. One must only apply a translation of the mesh
-//! into proper world coordinates for the given chunk.
+//! When working with sparse data sets, [`surface_nets`](crate::surface_nets) can generate meshes for array chunks that fit
+//! together seamlessly. This works because faces are not generated on the positive boundaries of a chunk. One must only apply a
+//! translation of the mesh into proper world coordinates for the given chunk.
 //!
 //! # Example Code
 //!
