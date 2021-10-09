@@ -1,5 +1,5 @@
 **/target
 Cargo.lock
-render-example/sphere.obj
-render-example/cube.obj
-render-example/link.obj
+examples/render-example/sphere.obj
+examples/render-example/cube.obj
+examples/render-example/link.obj
