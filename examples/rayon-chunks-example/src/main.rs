@@ -1,0 +1,294 @@
+use fast_surface_nets::glam::Vec3A;
+use fast_surface_nets::ndshape::{ConstShape, ConstShape3u32};
+use fast_surface_nets::{surface_nets, SurfaceNetsBuffer};
+use ilattice::prelude::*;
+use rand::{Rng, SeedableRng};
+use rayon::prelude::*;
+use std::io::Result;
+use std::time;
+
+// The un-padded chunk side, it will become 18*18*18 with padding
+const UNPADDED_CHUNK_SIDE: u32 = 16_u32;
+const DEFAULT_SDF_VALUE: f32 = 999.0;
+
+type PaddedChunkShape = ConstShape3u32<
+    { UNPADDED_CHUNK_SIDE + 2 },
+    { UNPADDED_CHUNK_SIDE + 2 },
+    { UNPADDED_CHUNK_SIDE + 2 },
+>;
+
+type Extent3i = Extent<IVec3>;
+
+pub(crate) trait ToFloat<T> {
+    fn to_float(self) -> Vec3A;
+}
+impl ToFloat<IVec3> for IVec3 {
+    #[inline]
+    fn to_float(self) -> Vec3A {
+        Vec3A::new(self.x as f32, self.y as f32, self.z as f32)
+    }
+}
+pub(crate) trait ToInt<T> {
+    fn to_int(self) -> IVec3;
+}
+impl ToInt<Vec3A> for Vec3A {
+    #[inline]
+    fn to_int(self) -> IVec3 {
+        IVec3::new(self.x as i32, self.y as i32, self.z as i32)
+    }
+}
+
+/// Convert the content of the buffers to obj_exporter formal, write the result to file
+fn write_mesh_to_obj_file(name: String, buffers: &[(Vec3A, SurfaceNetsBuffer)]) -> Result<()> {
+    let filename = format!("{}.obj", name);
+    let (vertex_capacity, shape_capacity, normal_capacity) =
+        buffers
+            .iter()
+            .fold((0usize, 0usize, 0usize), |(p, i, n), (_, buffer)| {
+                (
+                    p + buffer.positions.len(),
+                    i + buffer.indices.len(),
+                    n + buffer.normals.len(),
+                )
+            });
+    let mut vertices = Vec::<obj_exporter::Vertex>::with_capacity(vertex_capacity);
+    let mut vertex_offset = 0_usize;
+    let mut normals = Vec::<obj_exporter::Vertex>::with_capacity(normal_capacity);
+    let mut normal_offset = 0_usize;
+    let mut shapes = Vec::<obj_exporter::Shape>::with_capacity(shape_capacity / 3);
+
+    for (buffer_offset, buffer) in buffers.iter() {
+        vertices.append(
+            &mut buffer
+                .positions
+                .iter()
+                .map(|&[x, y, z]| obj_exporter::Vertex {
+                    x: x as f64 + buffer_offset.x as f64,
+                    y: y as f64 + buffer_offset.y as f64,
+                    z: z as f64 + buffer_offset.z as f64,
+                })
+                .collect::<Vec<_>>(),
+        );
+        normals.append(
+            &mut buffer
+                .normals
+                .iter()
+                .map(|&[x, y, z]| obj_exporter::Vertex {
+                    x: x as f64,
+                    y: y as f64,
+                    z: z as f64,
+                })
+                .collect::<Vec<_>>(),
+        );
+        shapes.append(
+            &mut buffer
+                .indices
+                .chunks(3)
+                .map(|tri| obj_exporter::Shape {
+                    primitive: obj_exporter::Primitive::Triangle(
+                        (
+                            vertex_offset + tri[0] as usize,
+                            None,
+                            Some(normal_offset + tri[0] as usize),
+                        ),
+                        (
+                            vertex_offset + tri[1] as usize,
+                            None,
+                            Some(normal_offset + tri[1] as usize),
+                        ),
+                        (
+                            vertex_offset + tri[2] as usize,
+                            None,
+                            Some(normal_offset + tri[2] as usize),
+                        ),
+                    ),
+                    groups: vec![],
+                    smoothing_groups: vec![],
+                })
+                .collect::<Vec<_>>(),
+        );
+        vertex_offset = vertices.len();
+        normal_offset = normals.len();
+    }
+    let number_of_tris = shapes.len();
+
+    obj_exporter::export_to_file(
+        &obj_exporter::ObjSet {
+            material_library: None,
+            objects: vec![obj_exporter::Object {
+                name,
+                vertices,
+                normals,
+                geometry: vec![obj_exporter::Geometry {
+                    material_name: None,
+                    shapes,
+                }],
+                tex_vertices: vec![],
+            }],
+        },
+        filename.clone(),
+    )?;
+    println!(
+        "Succcessfully wrote {} triangles to {}",
+        number_of_tris, &filename
+    );
+    Ok(())
+}
+
+// There is no need to waste CPU cycles calculating the sdf values of a tiny shape located on the
+// other side of the map. This is an attempt to group sdf functions by their footprints.
+// For example, if the sdf describes a sphere with radius 9 located at [0,0,0] the function will
+// not affect anything outside the AABB [-10,-10,-10]<->[10,10,10] and can thus be ignored at
+// coordinates outside that AABB.
+// Note that this only works if you are interested in the transition point between negative
+// and positive (inside vs outside) of a shape. This might be sub-optimal if using advanced
+// blending/merging functions that uses data "far away" from the shapes.
+struct Sphere {
+    // The extent of this sdf, the sdf is completely inside this AABB
+    extent: Extent3i,
+    origin: Vec3A,
+    radius: f32,
+}
+
+/// Generate the data of a single chunk by merging the sdf value (of the shapes intersecting
+/// the chunk) with a simple .min() function.
+fn generate_and_process_chunk(
+    unpadded_chunk_extent: Extent3i,
+    spheres: &[Sphere],
+) -> Option<(Vec3A, SurfaceNetsBuffer)> {
+    // the origin of this chunk, in world coordinates
+    let u_p_offset_min = unpadded_chunk_extent.minimum;
+    let padded_chunk_extent = unpadded_chunk_extent.padded(1);
+
+    // filter out every sdf that does not affect this chunk
+    let intersecting_spheres: Vec<_> = spheres
+        .iter()
+        .filter(|sphere| !sphere.extent.intersection(&padded_chunk_extent).is_empty())
+        .collect();
+
+    // No need to proceed if there is no data to process
+    if intersecting_spheres.is_empty() {
+        return None;
+    }
+
+    let mut array = { [DEFAULT_SDF_VALUE; PaddedChunkShape::SIZE as usize] };
+
+    let mut some_neg_or_zero_found = false;
+    let mut some_pos_found = false;
+
+    padded_chunk_extent.for_each3(|pwo| {
+        // pwo (PointWithOffset) is the voxel coorinate with the offset added, (i.e world coordinate system).
+
+        // Point With Offset as float
+        let pwof: Vec3A = pwo.to_float();
+
+        // p is the voxel coordinate without the padded chunk offset (i.e. padded chunk coordinate system)
+        // Note that the chunk is padded(1) so the p coordinate goes from [0;3]
+        // to [UNPADDED_CHUNK_SIDE+2;3].
+        // p=[1,1,1] (chunk coordinate system) correlates to unpadded_chunk_extent.minimum() (world coordinate system)
+        let p = (pwo - u_p_offset_min) + 1;
+
+        // v is the value of a voxel at p
+        let v =
+            &mut array[PaddedChunkShape::linearize([p.x as u32, p.y as u32, p.z as u32]) as usize];
+
+        for sphere in intersecting_spheres.iter() {
+            // you could use an additional test here to see if the individual voxel itself is
+            // contained within the shape extent.
+            //if !sphere.extent.contains(pwo) {
+            //    continue
+            //}
+
+            // Use a simple .min() function to merge sdf values
+            *v = (*v).min(((*sphere).origin - pwof).length() - sphere.radius);
+        }
+
+        if *v <= 0.0 {
+            some_neg_or_zero_found = true;
+        } else {
+            some_pos_found = true;
+        }
+    });
+    if some_pos_found && some_neg_or_zero_found {
+        // A combination of positive and negative values found - mesh this chunk
+        let mut sn_buffer = SurfaceNetsBuffer::default();
+
+        surface_nets(
+            &array,
+            &PaddedChunkShape {},
+            [0; 3],
+            [UNPADDED_CHUNK_SIDE + 1; 3],
+            &mut sn_buffer,
+        );
+
+        if sn_buffer.positions.is_empty() {
+            // No vertices were generated by this chunk, ignore it
+            None
+        } else {
+            Some((u_p_offset_min.to_float(), sn_buffer))
+        }
+    } else {
+        // Only positive or only negative values found, so no mesh will be generated from this
+        // chunk - ignore it
+        None
+    }
+}
+
+/// Generate some example data and then spawn off rayan thread tasks, one for each chunk
+fn generate_chunks() -> Vec<(Vec3A, SurfaceNetsBuffer)> {
+    // Create a chunk extent cube with a side of 10 chunks, and each chunk side is 16 voxels.
+    // Note that the size of this extent is measured in chunks, not voxels
+    let chunks_extent = Extent3i::from_min_and_lub(IVec3::from([-5; 3]), IVec3::from([5; 3]));
+
+    let mut rng = rand_chacha::ChaCha8Rng::seed_from_u64(38);
+
+    let spheres: Vec<Sphere> = (0..501)
+        .map(|_| {
+            let origin = Vec3A::new(
+                rng.gen_range(-74.0..74.0),
+                rng.gen_range(-74.0..74.0),
+                rng.gen_range(-74.0..74.0),
+            );
+            let radius = rng.gen_range(2.5..5.0);
+            let extent = Extent::from_min_and_lub(origin, origin).padded(radius);
+            let extent = Extent::from_min_and_lub(
+                extent.minimum.floor().to_int(),
+                extent.least_upper_bound().ceil().to_int(),
+            );
+            Sphere {
+                extent,
+                origin,
+                radius,
+            }
+        })
+        .collect();
+
+    let now = time::Instant::now();
+
+    let unpadded_chunk_shape = IVec3::from([UNPADDED_CHUNK_SIDE as i32; 3]);
+    let min = chunks_extent.minimum;
+    let max = chunks_extent.least_upper_bound();
+    let chunks: Vec<_> = itertools::iproduct!(min.x..max.x, min.y..max.y, min.z..max.z)
+        .par_bridge()
+        .filter_map(|p| {
+            let chunk_min = IVec3::from(p) * unpadded_chunk_shape;
+
+            generate_and_process_chunk(
+                Extent3i::from_min_and_shape(chunk_min, unpadded_chunk_shape),
+                &spheres,
+            )
+        })
+        .collect();
+    println!(
+        "Generated and meshed {} chunks in {:?}",
+        chunks.len(),
+        now.elapsed()
+    );
+    chunks
+}
+
+fn main() -> Result<()> {
+    let chunk_buffers = generate_chunks();
+    write_mesh_to_obj_file("mesh".to_string(), &chunk_buffers)?;
+    Ok(())
+}

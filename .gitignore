@@ -3,3 +3,4 @@ Cargo.lock
 examples/render-example/sphere.obj
 examples/render-example/cube.obj
 examples/render-example/link.obj
+examples/rayon-chunks-example/mesh.obj
