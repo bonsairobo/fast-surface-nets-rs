@@ -19,19 +19,19 @@ type PaddedChunkShape = ConstShape3u32<
 
 type Extent3i = Extent<IVec3>;
 
-pub(crate) trait ToFloat<T> {
+trait ToFloat {
     fn to_float(self) -> Vec3A;
 }
-impl ToFloat<IVec3> for IVec3 {
+impl ToFloat for IVec3 {
     #[inline]
     fn to_float(self) -> Vec3A {
         Vec3A::new(self.x as f32, self.y as f32, self.z as f32)
     }
 }
-pub(crate) trait ToInt<T> {
+trait ToInt {
     fn to_int(self) -> IVec3;
 }
-impl ToInt<Vec3A> for Vec3A {
+impl ToInt for Vec3A {
     #[inline]
     fn to_int(self) -> IVec3 {
         IVec3::new(self.x as i32, self.y as i32, self.z as i32)
@@ -135,14 +135,14 @@ fn write_mesh_to_obj_file(name: String, buffers: &[(Vec3A, SurfaceNetsBuffer)]) 
     Ok(())
 }
 
-// There is no need to waste CPU cycles calculating the sdf values of a tiny shape located on the
-// other side of the map. This is an attempt to group sdf functions by their footprints.
-// For example, if the sdf describes a sphere with radius 9 located at [0,0,0] the function will
-// not affect anything outside the AABB [-10,-10,-10]<->[10,10,10] and can thus be ignored at
-// coordinates outside that AABB.
-// Note that this only works if you are interested in the transition point between negative
-// and positive (inside vs outside) of a shape. This might be sub-optimal if using advanced
-// blending/merging functions that uses data "far away" from the shapes.
+// There is no need to waste CPU cycles calculating the sdf values of a tiny shape located on the other side of the map. This is
+// an attempt to group sdf functions by their footprints.
+//
+// For example, if the sdf describes a sphere with radius 9 located at [0,0,0] the function will not affect anything outside the
+// AABB [-10,-10,-10] <-> [10,10,10] and can thus be ignored at coordinates outside that AABB.
+//
+// Note that this only works if you are interested in the transition point between negative and positive (inside vs outside) of
+// a shape. This might be sub-optimal if using advanced blending/merging functions that uses data "far away" from the shapes.
 struct Sphere {
     // The extent of this sdf, the sdf is completely inside this AABB
     extent: Extent3i,
@@ -150,8 +150,8 @@ struct Sphere {
     radius: f32,
 }
 
-/// Generate the data of a single chunk by merging the sdf value (of the shapes intersecting
-/// the chunk) with a simple .min() function.
+/// Generate the data of a single chunk by merging the sdf value (of the shapes intersecting the chunk) with a simple .min()
+/// function.
 fn generate_and_process_chunk(
     unpadded_chunk_extent: Extent3i,
     spheres: &[Sphere],
@@ -183,8 +183,9 @@ fn generate_and_process_chunk(
         let pwof: Vec3A = pwo.to_float();
 
         // p is the voxel coordinate without the padded chunk offset (i.e. padded chunk coordinate system)
-        // Note that the chunk is padded(1) so the p coordinate goes from [0;3]
-        // to [UNPADDED_CHUNK_SIDE+2;3].
+        //
+        // Note that the chunk is padded(1) so the p coordinate goes from [0;3] to [UNPADDED_CHUNK_SIDE+2;3].
+        //
         // p=[1,1,1] (chunk coordinate system) correlates to unpadded_chunk_extent.minimum() (world coordinate system)
         let p = (pwo - u_p_offset_min) + 1;
 
@@ -193,10 +194,8 @@ fn generate_and_process_chunk(
             &mut array[PaddedChunkShape::linearize([p.x as u32, p.y as u32, p.z as u32]) as usize];
 
         for sphere in intersecting_spheres.iter() {
-            // you could use an additional test here to see if the individual voxel itself is
-            // contained within the shape extent.
-            //if !sphere.extent.contains(pwo) {
-            //    continue
+            // you could use an additional test here to see if the individual voxel itself is contained within the shape extent.
+            // if !sphere.extent.contains(pwo) {continue
             //}
 
             // Use a simple .min() function to merge sdf values
@@ -228,8 +227,7 @@ fn generate_and_process_chunk(
             Some((u_p_offset_min.to_float(), sn_buffer))
         }
     } else {
-        // Only positive or only negative values found, so no mesh will be generated from this
-        // chunk - ignore it
+        // Only positive or only negative values found, so no mesh will be generated from this chunk - ignore it
         None
     }
 }
@@ -237,6 +235,7 @@ fn generate_and_process_chunk(
 /// Generate some example data and then spawn off rayan thread tasks, one for each chunk
 fn generate_chunks() -> Vec<(Vec3A, SurfaceNetsBuffer)> {
     // Create a chunk extent cube with a side of 10 chunks, and each chunk side is 16 voxels.
+    //
     // Note that the size of this extent is measured in chunks, not voxels
     let chunks_extent = Extent3i::from_min_and_lub(IVec3::from([-5; 3]), IVec3::from([5; 3]));
 
@@ -250,11 +249,9 @@ fn generate_chunks() -> Vec<(Vec3A, SurfaceNetsBuffer)> {
                 rng.gen_range(-74.0..74.0),
             );
             let radius = rng.gen_range(2.5..5.0);
-            let extent = Extent::from_min_and_lub(origin, origin).padded(radius);
-            let extent = Extent::from_min_and_lub(
-                extent.minimum.floor().to_int(),
-                extent.least_upper_bound().ceil().to_int(),
-            );
+            let extent = Extent::from_min_and_lub(origin, origin)
+                .padded(radius)
+                .containing_integer_extent();
             Sphere {
                 extent,
                 origin,
@@ -266,9 +263,8 @@ fn generate_chunks() -> Vec<(Vec3A, SurfaceNetsBuffer)> {
     let now = time::Instant::now();
 
     let unpadded_chunk_shape = IVec3::from([UNPADDED_CHUNK_SIDE as i32; 3]);
-    let min = chunks_extent.minimum;
-    let max = chunks_extent.least_upper_bound();
-    let chunks: Vec<_> = itertools::iproduct!(min.x..max.x, min.y..max.y, min.z..max.z)
+    let chunks: Vec<_> = chunks_extent
+        .iter3()
         .par_bridge()
         .filter_map(|p| {
             let chunk_min = IVec3::from(p) * unpadded_chunk_shape;
