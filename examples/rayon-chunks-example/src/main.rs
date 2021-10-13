@@ -38,24 +38,28 @@ impl ToInt for Vec3A {
     }
 }
 
-/// Convert the content of the buffers to obj_exporter formal, write the result to file
+/// Convert the content of the buffers to obj_exporter format, write the result to file
 fn write_mesh_to_obj_file(name: String, buffers: &[(Vec3A, SurfaceNetsBuffer)]) -> Result<()> {
     let filename = format!("{}.obj", name);
-    let (vertex_capacity, shape_capacity, normal_capacity) =
-        buffers
+
+    let (mut vertices, mut normals, mut shapes) = {
+        let sum = buffers
             .iter()
-            .fold((0usize, 0usize, 0usize), |(p, i, n), (_, buffer)| {
+            .fold((0usize, 0usize, 0usize), |(p, n, i), (_, buffer)| {
                 (
                     p + buffer.positions.len(),
-                    i + buffer.indices.len(),
                     n + buffer.normals.len(),
+                    i + buffer.indices.len(),
                 )
             });
-    let mut vertices = Vec::<obj_exporter::Vertex>::with_capacity(vertex_capacity);
+        (
+            Vec::<obj_exporter::Vertex>::with_capacity(sum.0),
+            Vec::<obj_exporter::Vertex>::with_capacity(sum.1),
+            Vec::<obj_exporter::Shape>::with_capacity(sum.2 / 3),
+        )
+    };
     let mut vertex_offset = 0_usize;
-    let mut normals = Vec::<obj_exporter::Vertex>::with_capacity(normal_capacity);
     let mut normal_offset = 0_usize;
-    let mut shapes = Vec::<obj_exporter::Shape>::with_capacity(shape_capacity / 3);
 
     for (buffer_offset, buffer) in buffers.iter() {
         vertices.append(
@@ -138,13 +142,13 @@ fn write_mesh_to_obj_file(name: String, buffers: &[(Vec3A, SurfaceNetsBuffer)]) 
 // There is no need to waste CPU cycles calculating the sdf values of a tiny shape located on the other side of the map. This is
 // an attempt to group sdf functions by their footprints.
 //
-// For example, if the sdf describes a sphere with radius 9 located at [0,0,0] the function will not affect anything outside the
+// For example, if the sdf describes a sphere with radius 9 centered at [0,0,0] the function will not affect anything outside the
 // AABB [-10,-10,-10] <-> [10,10,10] and can thus be ignored at coordinates outside that AABB.
 //
 // Note that this only works if you are interested in the transition point between negative and positive (inside vs outside) of
-// a shape. This might be sub-optimal if using advanced blending/merging functions that uses data "far away" from the shapes.
+// a shape. This might be sub-optimal if using advanced blending/combination functions that uses data "far away" from the shapes.
 struct Sphere {
-    // The extent of this sdf, the sdf is completely inside this AABB
+    /// The extent of this sdf, the sdf is completely inside this AABB
     extent: Extent3i,
     origin: Vec3A,
     radius: f32,
@@ -153,12 +157,9 @@ struct Sphere {
 /// Generate the data of a single chunk by merging the sdf value (of the shapes intersecting the chunk) with a simple .min()
 /// function.
 fn generate_and_process_chunk(
-    unpadded_chunk_extent: Extent3i,
+    padded_chunk_extent: Extent3i,
     spheres: &[Sphere],
 ) -> Option<(Vec3A, SurfaceNetsBuffer)> {
-    // the origin of this chunk, in world coordinates
-    let padded_chunk_extent = unpadded_chunk_extent.padded(1);
-
     // filter out every sdf that does not affect this chunk
     let intersecting_spheres: Vec<_> = spheres
         .iter()
@@ -186,18 +187,19 @@ fn generate_and_process_chunk(
         // Note that the chunk is padded(1) so the p coordinate goes from [0;3] to [UNPADDED_CHUNK_SIDE+2;3].
         //
         // p=[1,1,1] (chunk coordinate system) correlates to unpadded_chunk_extent.minimum (world coordinate system)
-        let p = (pwo - unpadded_chunk_extent.minimum) + 1;
+        let p = pwo - padded_chunk_extent.minimum;
 
-        // v is the value of a voxel at p
+        // *v is the value of a voxel at p
         let v =
             &mut array[PaddedChunkShape::linearize([p.x as u32, p.y as u32, p.z as u32]) as usize];
 
         for sphere in intersecting_spheres.iter() {
-            // you could use an additional test here to see if the individual voxel itself is contained within the shape extent.
+            // You could use an additional test here to see if the individual voxel itself is contained within the shape extent.
+            // This might result in a speed gain, specially for complex sdf functions.
             // if !sphere.extent.contains(pwo) {continue}
 
             // Use a simple .min() function to merge sdf values
-            *v = (*v).min((sphere.origin - pwof).length() - sphere.radius);
+            *v = v.min((sphere.origin - pwof).length() - sphere.radius);
         }
 
         if *v <= 0.0 {
@@ -230,7 +232,7 @@ fn generate_and_process_chunk(
     }
 }
 
-/// Generate some example data and then spawn off rayan thread tasks, one for each chunk
+/// Generate some example data and then spawn off rayon thread tasks, one for each chunk
 fn generate_chunks() -> Vec<(Vec3A, SurfaceNetsBuffer)> {
     // Create a chunk extent cube with a side of 10 chunks, and each chunk side is 16 voxels.
     //
@@ -265,10 +267,10 @@ fn generate_chunks() -> Vec<(Vec3A, SurfaceNetsBuffer)> {
         .iter3()
         .par_bridge()
         .filter_map(|p| {
-            let chunk_min = IVec3::from(p) * unpadded_chunk_shape;
+            let chunk_min = p * unpadded_chunk_shape;
 
             generate_and_process_chunk(
-                Extent3i::from_min_and_shape(chunk_min, unpadded_chunk_shape),
+                Extent3i::from_min_and_shape(chunk_min, unpadded_chunk_shape).padded(1),
                 &spheres,
             )
         })
