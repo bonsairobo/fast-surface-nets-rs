@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-ilattice = { git="https://github.com/bonsairobo/ilattice-rs.git", rev="7b8b723", default-features = false, features = ["glam"]}
+ilattice = { git="https://github.com/bonsairobo/ilattice-rs.git", rev="390097b", default-features = false, features = ["glam"]}
 rayon = "1.5"
 obj-exporter = "0.2"
 rand = "0.8"

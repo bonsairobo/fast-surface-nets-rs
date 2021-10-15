@@ -176,7 +176,7 @@ fn generate_and_process_chunk(
     let mut some_neg_or_zero_found = false;
     let mut some_pos_found = false;
 
-    padded_chunk_extent.for_each3(|pwo| {
+    padded_chunk_extent.iter3().for_each(|pwo| {
         // pwo (PointWithOffset) is the voxel coordinate with the offset added, (i.e world coordinate system).
 
         // Point With Offset as float
