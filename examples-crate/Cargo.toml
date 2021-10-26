@@ -1,0 +1,24 @@
+[package]
+name = "fast-surface-nets-examples"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+bevy = { version = "0.5", default-features = false, features = ["bevy_wgpu", "bevy_winit", "render", "png", "x11"] }
+obj-exporter = "0.2"
+rayon = "1.5"
+rand = "0.8"
+rand_chacha = "0.3"
+
+ilattice = { version = "0.1", default-features = false, features = ["glam"]}
+
+[dependencies.fast-surface-nets]
+path = ".."
+
+[[example]]
+name = "render"
+path = "render/main.rs"
+
+[[example]]
+name = "rayon-chunks"
+path = "rayon-chunks/main.rs"

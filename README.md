@@ -3,7 +3,7 @@
 A fast, chunk-friendly implementation of Naive Surface Nets on regular grids.
 
 ![Mesh
-Examples](https://raw.githubusercontent.com/bonsairobo/fast-surface-nets-rs/main/examples/render-example/mesh_examples.png)
+Examples](https://raw.githubusercontent.com/bonsairobo/fast-surface-nets-rs/main/examples-crate/render/mesh_examples.png)
 
 Surface Nets is an algorithm for extracting an isosurface mesh from a [signed distance
 field](https://en.wikipedia.org/wiki/Signed_distance_function) sampled on a regular grid. It is nearly the same as Dual
