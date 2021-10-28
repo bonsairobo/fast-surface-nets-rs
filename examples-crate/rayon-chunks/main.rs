@@ -28,15 +28,6 @@ impl ToFloat for IVec3 {
         Vec3A::new(self.x as f32, self.y as f32, self.z as f32)
     }
 }
-trait ToInt {
-    fn to_int(self) -> IVec3;
-}
-impl ToInt for Vec3A {
-    #[inline]
-    fn to_int(self) -> IVec3 {
-        IVec3::new(self.x as i32, self.y as i32, self.z as i32)
-    }
-}
 
 /// Convert the content of the buffers to obj_exporter format, write the result to file
 fn write_mesh_to_obj_file(name: String, buffers: &[(Vec3A, SurfaceNetsBuffer)]) -> Result<()> {
