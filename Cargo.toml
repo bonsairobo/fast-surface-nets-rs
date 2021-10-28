@@ -2,7 +2,7 @@
 name = "fast-surface-nets"
 description = "A fast, chunk-friendly implementation of Naive Surface Nets on regular grids."
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/bonsairobo/fast-surface-nets-rs"
 keywords = ["graphics", "isosurface", "mesh", "voxel"]
