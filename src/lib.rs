@@ -157,7 +157,7 @@ fn estimate_surface<T, S>(
         for y in miny..maxy {
             for x in minx..maxx {
                 let stride = shape.linearize([x, y, z]);
-                let p = Vec3A::new(x as f32, y as f32, z as f32);
+                let p = Vec3A::from([x as f32, y as f32, z as f32]);
                 if estimate_surface_in_cube(sdf, shape, p, stride, output) {
                     output.stride_to_index[stride as usize] = output.positions.len() as u32 - 1;
                     output.surface_points.push([x, y, z]);
@@ -244,17 +244,17 @@ fn estimate_surface_edge_intersection(
 /// For each dimension, there are 4 cube edges along that axis. This will do bilinear interpolation between the differences
 /// along those edges based on the position of the surface (s).
 fn sdf_gradient(dists: &[f32; 8], s: Vec3A) -> Vec3A {
-    let p00 = Vec3A::new(dists[0b001], dists[0b010], dists[0b100]);
-    let n00 = Vec3A::new(dists[0b000], dists[0b000], dists[0b000]);
+    let p00 = Vec3A::from([dists[0b001], dists[0b010], dists[0b100]]);
+    let n00 = Vec3A::from([dists[0b000], dists[0b000], dists[0b000]]);
 
-    let p10 = Vec3A::new(dists[0b101], dists[0b011], dists[0b110]);
-    let n10 = Vec3A::new(dists[0b100], dists[0b001], dists[0b010]);
+    let p10 = Vec3A::from([dists[0b101], dists[0b011], dists[0b110]]);
+    let n10 = Vec3A::from([dists[0b100], dists[0b001], dists[0b010]]);
 
-    let p01 = Vec3A::new(dists[0b011], dists[0b110], dists[0b101]);
-    let n01 = Vec3A::new(dists[0b010], dists[0b100], dists[0b001]);
+    let p01 = Vec3A::from([dists[0b011], dists[0b110], dists[0b101]]);
+    let n01 = Vec3A::from([dists[0b010], dists[0b100], dists[0b001]]);
 
-    let p11 = Vec3A::new(dists[0b111], dists[0b111], dists[0b111]);
-    let n11 = Vec3A::new(dists[0b110], dists[0b101], dists[0b011]);
+    let p11 = Vec3A::from([dists[0b111], dists[0b111], dists[0b111]]);
+    let n11 = Vec3A::from([dists[0b110], dists[0b101], dists[0b011]]);
 
     // Each dimension encodes an edge delta, giving 12 in total.
     let d00 = p00 - n00; // Edges (0b00x, 0b0y0, 0bz00)
