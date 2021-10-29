@@ -262,7 +262,7 @@ fn sdf_gradient(dists: &[f32; 8], s: Vec3A) -> Vec3A {
     let d01 = p01 - n01; // Edges (0b01x, 0b1y0, 0bz01)
     let d11 = p11 - n11; // Edges (0b11x, 0b1y1, 0bz11)
 
-    let neg = const_vec3a!([1.0; 3]) - s;
+    let neg = Vec3A::ONE - s;
 
     // Do bilinear interpolation between 4 edges in each dimension.
     neg.yzx() * neg.zxy() * d00
