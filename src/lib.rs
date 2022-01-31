@@ -94,9 +94,12 @@ impl SurfaceNetsBuffer {
         self.surface_strides.clear();
 
         // Just make sure this buffer is big enough, whether or not we've used it before.
-        self.stride_to_index.resize(array_size, 0);
+        self.stride_to_index.resize(array_size, NULL_VERTEX);
     }
 }
+
+/// This stride of the SDF array did not produce a vertex.
+pub const NULL_VERTEX: u32 = u32::MAX;
 
 /// The Naive Surface Nets smooth voxel meshing algorithm.
 ///
@@ -128,7 +131,7 @@ pub fn surface_nets<T, S>(
     output: &mut SurfaceNetsBuffer,
 ) where
     T: SignedDistance,
-    S: Shape<3, Coord=u32>,
+    S: Shape<3, Coord = u32>,
 {
     // SAFETY
     // Make sure the slice matches the shape before we start using get_unchecked.
@@ -151,7 +154,7 @@ fn estimate_surface<T, S>(
     output: &mut SurfaceNetsBuffer,
 ) where
     T: SignedDistance,
-    S: Shape<3, Coord=u32>,
+    S: Shape<3, Coord = u32>,
 {
     for z in minz..maxz {
         for y in miny..maxy {
@@ -162,6 +165,8 @@ fn estimate_surface<T, S>(
                     output.stride_to_index[stride as usize] = output.positions.len() as u32 - 1;
                     output.surface_points.push([x, y, z]);
                     output.surface_strides.push(stride);
+                } else {
+                    output.stride_to_index[stride as usize] = NULL_VERTEX;
                 }
             }
         }
@@ -182,7 +187,7 @@ fn estimate_surface_in_cube<T, S>(
 ) -> bool
 where
     T: SignedDistance,
-    S: Shape<3, Coord=u32>,
+    S: Shape<3, Coord = u32>,
 {
     // Get the signed distance values at each corner of this cube.
     let mut corner_dists = [0f32; 8];
@@ -282,7 +287,7 @@ fn make_all_quads<T, S>(
     output: &mut SurfaceNetsBuffer,
 ) where
     T: SignedDistance,
-    S: Shape<3, Coord=u32>,
+    S: Shape<3, Coord = u32>,
 {
     let xyz_strides = [
         shape.linearize([1, 0, 0]) as usize,
