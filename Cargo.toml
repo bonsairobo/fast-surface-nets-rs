@@ -9,4 +9,4 @@ keywords = ["graphics", "isosurface", "mesh", "voxel"]
 
 [dependencies]
 glam = "0.20" # For SIMD Vec3A
-ndshape = "0.1"
+ndshape = { git = "https://github.com/bonsairobo/ndshape-rs", branch = "main" }

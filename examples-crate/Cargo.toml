@@ -11,7 +11,7 @@ rayon = "1.5"
 rand = "0.8"
 rand_chacha = "0.3"
 
-ilattice = { version = "0.1", default-features = false, features = ["glam"]}
+ilattice = { git = "https://github.com/bonsairobo/ilattice-rs", branch = "main", default-features = false, features = ["glam"]}
 
 [dependencies.fast-surface-nets]
 path = ".."

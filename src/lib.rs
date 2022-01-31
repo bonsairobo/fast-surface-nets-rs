@@ -32,7 +32,7 @@
 //! type ChunkShape = ConstShape3u32<18, 18, 18>;
 //!
 //! // This chunk will cover just a single octant of a sphere SDF (radius 15).
-//! let mut sdf = [1.0; ChunkShape::SIZE as usize];
+//! let mut sdf = [1.0; ChunkShape::USIZE];
 //! for i in 0u32..ChunkShape::SIZE {
 //!     let [x, y, z] = ChunkShape::delinearize(i);
 //!     sdf[i as usize] = ((x * x + y * y + z * z) as f32).sqrt() - 15.0;
@@ -128,7 +128,7 @@ pub fn surface_nets<T, S>(
     output: &mut SurfaceNetsBuffer,
 ) where
     T: SignedDistance,
-    S: Shape<u32, 3>,
+    S: Shape<3, Coord=u32>,
 {
     // SAFETY
     // Make sure the slice matches the shape before we start using get_unchecked.
@@ -151,7 +151,7 @@ fn estimate_surface<T, S>(
     output: &mut SurfaceNetsBuffer,
 ) where
     T: SignedDistance,
-    S: Shape<u32, 3>,
+    S: Shape<3, Coord=u32>,
 {
     for z in minz..maxz {
         for y in miny..maxy {
@@ -182,7 +182,7 @@ fn estimate_surface_in_cube<T, S>(
 ) -> bool
 where
     T: SignedDistance,
-    S: Shape<u32, 3>,
+    S: Shape<3, Coord=u32>,
 {
     // Get the signed distance values at each corner of this cube.
     let mut corner_dists = [0f32; 8];
@@ -282,7 +282,7 @@ fn make_all_quads<T, S>(
     output: &mut SurfaceNetsBuffer,
 ) where
     T: SignedDistance,
-    S: Shape<u32, 3>,
+    S: Shape<3, Coord=u32>,
 {
     let xyz_strides = [
         shape.linearize([1, 0, 0]) as usize,

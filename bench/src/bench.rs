@@ -8,7 +8,7 @@ type SampleShape = ConstShape3u32<18, 18, 18>;
 
 fn bench_empty_space(c: &mut Criterion) {
     let mut group = c.benchmark_group("bench_empty_space");
-    let samples = [Sd8(i8::MAX); SampleShape::SIZE as usize];
+    let samples = [Sd8(i8::MAX); SampleShape::USIZE];
 
     // Do a single run first to allocate the buffer to the right size.
     let mut buffer = SurfaceNetsBuffer::default();
@@ -27,7 +27,7 @@ fn bench_empty_space(c: &mut Criterion) {
 
 fn bench_sine_sdf(c: &mut Criterion) {
     let mut group = c.benchmark_group("bench_sine_sdf");
-    let mut samples = [Sd8(i8::MAX); SampleShape::SIZE as usize];
+    let mut samples = [Sd8(i8::MAX); SampleShape::USIZE];
     for i in 0u32..(SampleShape::SIZE) {
         let p = into_domain(16, SampleShape::delinearize(i));
         samples[i as usize] = sine_sdf(5.0, p);
@@ -50,7 +50,7 @@ fn bench_sine_sdf(c: &mut Criterion) {
 
 fn bench_sphere(c: &mut Criterion) {
     let mut group = c.benchmark_group("bench_sphere");
-    let mut samples = [Sd8(i8::MAX); SampleShape::SIZE as usize];
+    let mut samples = [Sd8(i8::MAX); SampleShape::USIZE];
     for i in 0u32..(SampleShape::SIZE) {
         let p = into_domain(16, SampleShape::delinearize(i));
         samples[i as usize] = sphere_sdf(p);
