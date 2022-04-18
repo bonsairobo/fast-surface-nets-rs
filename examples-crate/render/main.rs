@@ -7,22 +7,22 @@ use bevy::{
     prelude::*,
     render::{
         mesh::{Indices, VertexAttributeValues},
-        options::WgpuOptions,
         render_resource::{PrimitiveTopology, WgpuFeatures},
+        settings::WgpuSettings,
     },
 };
 use obj_exporter::{export_to_file, Geometry, ObjSet, Object, Primitive, Shape, Vertex};
 
 fn main() {
     App::new()
-        .insert_resource(WgpuOptions {
+        .insert_resource(WgpuSettings {
             features: WgpuFeatures::POLYGON_MODE_LINE,
             ..Default::default()
         })
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)
-        .add_startup_system(setup.system())
+        .add_startup_system(setup)
         .run();
 }
 
@@ -95,16 +95,16 @@ fn sdf_to_mesh(
     let num_vertices = buffer.positions.len();
 
     let mut render_mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    render_mesh.set_attribute(
-        "Vertex_Position",
+    render_mesh.insert_attribute(
+        Mesh::ATTRIBUTE_POSITION,
         VertexAttributeValues::Float32x3(buffer.positions.clone()),
     );
-    render_mesh.set_attribute(
-        "Vertex_Normal",
+    render_mesh.insert_attribute(
+        Mesh::ATTRIBUTE_NORMAL,
         VertexAttributeValues::Float32x3(buffer.normals.clone()),
     );
-    render_mesh.set_attribute(
-        "Vertex_Uv",
+    render_mesh.insert_attribute(
+        Mesh::ATTRIBUTE_UV_0,
         VertexAttributeValues::Float32x2(vec![[0.0; 2]; num_vertices]),
     );
     render_mesh.set_indices(Some(Indices::U32(buffer.indices.clone())));
