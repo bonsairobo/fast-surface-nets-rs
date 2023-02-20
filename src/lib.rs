@@ -62,7 +62,7 @@ impl SignedDistance for f32 {
 }
 
 /// The output buffers used by [`surface_nets`]. These buffers can be reused to avoid reallocating memory.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct SurfaceNetsBuffer {
     /// The triangle mesh positions.
     ///
