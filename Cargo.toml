@@ -8,5 +8,5 @@ repository = "https://github.com/bonsairobo/fast-surface-nets-rs"
 keywords = ["graphics", "isosurface", "mesh", "voxel"]
 
 [dependencies]
-glam = "0.20" # For SIMD Vec3A
+glam = "0.23.0" # For SIMD Vec3A
 ndshape = "0.3"
