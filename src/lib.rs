@@ -48,7 +48,7 @@
 pub use glam;
 pub use ndshape;
 
-use glam::{const_vec3a, Vec3A, Vec3Swizzles};
+use glam::{Vec3A, Vec3Swizzles};
 use ndshape::Shape;
 
 pub trait SignedDistance: Into<f32> + Copy {
@@ -432,14 +432,14 @@ const CUBE_CORNERS: [[u32; 3]; 8] = [
     [1, 1, 1],
 ];
 const CUBE_CORNER_VECTORS: [Vec3A; 8] = [
-    const_vec3a!([0.0, 0.0, 0.0]),
-    const_vec3a!([1.0, 0.0, 0.0]),
-    const_vec3a!([0.0, 1.0, 0.0]),
-    const_vec3a!([1.0, 1.0, 0.0]),
-    const_vec3a!([0.0, 0.0, 1.0]),
-    const_vec3a!([1.0, 0.0, 1.0]),
-    const_vec3a!([0.0, 1.0, 1.0]),
-    const_vec3a!([1.0, 1.0, 1.0]),
+    Vec3A::from_array([0.0, 0.0, 0.0]),
+    Vec3A::from_array([1.0, 0.0, 0.0]),
+    Vec3A::from_array([0.0, 1.0, 0.0]),
+    Vec3A::from_array([1.0, 1.0, 0.0]),
+    Vec3A::from_array([0.0, 0.0, 1.0]),
+    Vec3A::from_array([1.0, 0.0, 1.0]),
+    Vec3A::from_array([0.0, 1.0, 1.0]),
+    Vec3A::from_array([1.0, 1.0, 1.0]),
 ];
 const CUBE_EDGES: [[u32; 2]; 12] = [
     [0b000, 0b001],
