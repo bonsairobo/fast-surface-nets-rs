@@ -136,7 +136,8 @@ pub fn surface_nets<T, S>(
     // SAFETY
     // Make sure the slice matches the shape before we start using get_unchecked.
     assert!(shape.linearize(min) <= shape.linearize(max));
-    assert!((shape.linearize(max) as usize) < sdf.len());
+    assert!(max[0] > 0 && max[1] > 0 && max[2] > 0);
+    assert!((shape.linearize([max[0] - 1, max[1] - 1, max[2] - 1]) as usize) < sdf.len());
 
     output.reset(sdf.len());
 
