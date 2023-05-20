@@ -10,3 +10,6 @@ keywords = ["graphics", "isosurface", "mesh", "voxel"]
 [dependencies]
 glam = "0.23" # For SIMD Vec3A
 ndshape = "0.3"
+
+[features]
+eval-max-plane = []
