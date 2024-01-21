@@ -51,7 +51,7 @@ pub use ndshape;
 use glam::{Vec3A, Vec3Swizzles};
 use ndshape::Shape;
 
-pub trait SignedDistance: Into<f32> + Copy {
+pub trait SignedDistance: Into<f32> + From<f32> + Copy {
     fn is_negative(self) -> bool;
 }
 
@@ -206,7 +206,7 @@ where
         return false;
     }
 
-    let c = centroid_of_edge_intersections(&corner_dists);
+    let c = centroid_of_edge_intersections::<T>(&corner_dists);
 
     output.positions.push((p + c).into());
     output.normals.push(sdf_gradient(&corner_dists, c).into());
@@ -214,13 +214,17 @@ where
     true
 }
 
-fn centroid_of_edge_intersections(dists: &[f32; 8]) -> Vec3A {
+fn centroid_of_edge_intersections<T>(dists: &[f32; 8]) -> Vec3A
+    where T: SignedDistance
+{
     let mut count = 0;
     let mut sum = Vec3A::ZERO;
     for &[corner1, corner2] in CUBE_EDGES.iter() {
         let d1 = dists[corner1 as usize];
         let d2 = dists[corner2 as usize];
-        if (d1 < 0.0) != (d2 < 0.0) {
+        let v1: T = d1.into();
+        let v2: T = d1.into();
+        if v1.is_negative() != v2.is_negative() {
             count += 1;
             sum += estimate_surface_edge_intersection(corner1, corner2, d1, d2);
         }
