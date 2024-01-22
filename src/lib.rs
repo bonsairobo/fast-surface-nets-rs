@@ -223,7 +223,7 @@ fn centroid_of_edge_intersections<T>(dists: &[f32; 8]) -> Vec3A
         let d1 = dists[corner1 as usize];
         let d2 = dists[corner2 as usize];
         let v1: T = d1.into();
-        let v2: T = d1.into();
+        let v2: T = d2.into();
         if v1.is_negative() != v2.is_negative() {
             count += 1;
             sum += estimate_surface_edge_intersection(corner1, corner2, d1, d2);
