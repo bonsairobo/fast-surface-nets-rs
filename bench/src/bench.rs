@@ -111,7 +111,7 @@ impl From<Sd8> for f32 {
 
 impl From<f32> for Sd8 {
     fn from(d: f32) -> Self {
-        Self((Self::RESOLUTION * d.min(1.0).max(-1.0)) as i8)
+        Self((Self::RESOLUTION * d.clamp(-1.0, 1.0)) as i8)
     }
 }
 
