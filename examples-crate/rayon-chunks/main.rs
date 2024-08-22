@@ -114,7 +114,7 @@ fn write_mesh_to_obj_file(name: String, buffers: &[(Vec3A, SurfaceNetsBuffer)]) 
         filename.clone(),
     )?;
     println!(
-        "Succcessfully wrote {} triangles to {}",
+        "Successfully wrote {} triangles to {}",
         number_of_tris, &filename
     );
     Ok(())
