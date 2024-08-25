@@ -1,7 +1,7 @@
 [package]
 name = "fast-surface-nets"
 description = "A fast, chunk-friendly implementation of Naive Surface Nets on regular grids."
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/bonsairobo/fast-surface-nets-rs"
@@ -10,3 +10,6 @@ keywords = ["graphics", "isosurface", "mesh", "voxel"]
 [dependencies]
 glam = "0.29" # For SIMD Vec3A
 ndshape = "0.3"
+
+[features]
+eval-max-plane = []
