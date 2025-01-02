@@ -301,9 +301,10 @@ fn make_all_quads<T, S>(
         .zip(output.surface_strides.iter())
     {
         let p_stride = p_stride as usize;
+        let eval_max_plane = cfg!(feature = "eval-max-plane");
 
         // Do edges parallel with the X axis
-        if y != miny && z != minz && x != maxx - 1 {
+        if y != miny && z != minz && (eval_max_plane || x != maxx - 1) {
             maybe_make_quad(
                 sdf,
                 &output.stride_to_index,
@@ -316,7 +317,7 @@ fn make_all_quads<T, S>(
             );
         }
         // Do edges parallel with the Y axis
-        if x != minx && z != minz && y != maxy - 1 {
+        if x != minx && z != minz && (eval_max_plane || y != maxy - 1) {
             maybe_make_quad(
                 sdf,
                 &output.stride_to_index,
@@ -329,7 +330,7 @@ fn make_all_quads<T, S>(
             );
         }
         // Do edges parallel with the Z axis
-        if x != minx && y != miny && z != maxz - 1 {
+        if x != minx && y != miny && (eval_max_plane || z != maxz - 1) {
             maybe_make_quad(
                 sdf,
                 &output.stride_to_index,
